@@ -1,6 +1,6 @@
-# Jack Meterbridge
+# Jack Text Meterbridge
 
-This is an attempt to maintain [JACK Meterbridge](http://plugin.org.uk/meterbridge/) from Steve Harris (2002)
+This is an attempt use [stephanb2's](https://github.com/stephanb2/jack-meterbridge) maintenance version of [JACK Meterbridge](http://plugin.org.uk/meterbridge/) from Steve Harris (2002) to provide text based graphs that use VT100 codes for positioning.
 
 Broadcast and Music Producers are advised to use [Ebumeter](http://kokkinizita.linuxaudio.org/linuxaudio/) by Fons Adriaensen, which offers loudness metering according to [EBU R-128](https://tech.ebu.ch/publications/r128). 
 

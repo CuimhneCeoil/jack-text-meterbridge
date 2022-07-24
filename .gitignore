@@ -12,3 +12,5 @@ src/meterbridge
 
 # python / Jupyter
 **/.ipynb_checkpoints
+/.cproject
+/.project
