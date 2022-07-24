@@ -27,15 +27,13 @@ This project is released under the GNU General Public License, version 3 (GPL-3.
 
 ### PPM - Peak Program level Meters
 
-Approximatly conforming to BS 6840-10. These meters are designed to indicate peak amplitude, as opposed to VU meters which are designed to indicate volume.
+These meters are designed to indicate peak amplitude, as opposed to VU meters which are designed to indicate volume.
 
 The scale is correct according to the standard, 4 equates to 0dB, 1 to -12, 7 to +12, and it is linear with decibels.
 
 I've never used a real PPM meter, so I don't know if it reacts correctly. Feedback welcome.
 	
 ### VU - Volume Unit meters
-
-Conforming to BS 6840-17:1991. 
 
 These meters are designed to measure the "volume" of an audio signal, it is not as relevant to digital systems as PPM meters, but is useful if you are interfacing to analogue tape, FM broadcast equipment or want a general idea of the signal volume.
 

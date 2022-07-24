@@ -17,12 +17,7 @@ enum meterType {
 	MET_VU = 1,
 	MET_PPM = 2,
 	MET_DPM = 3,
-	MET_JF = 4,
-	MET_SCO = 5
 };
-
-extern SDL_Surface *screen, *meter, *meter_buf;
-extern SDL_Rect win, dest[MAX_METERS];
 
 extern jack_port_t *input_ports[MAX_METERS];
 extern jack_port_t *output_ports[MAX_METERS];

@@ -26,11 +26,6 @@ void make_channel(jack_client_t *client, int i, char *port_name);
 void cleanup(jack_client_t *client);
 int store(char *path, void *data);
 
-static SDL_Thread *gt;
-static SDL_Surface *background_image;
-SDL_Surface *screen, *meter, *meter_buf;
-SDL_Rect win, dest[MAX_METERS];
-
 int num_meters = 0;
 int num_scopes = 0;
 int meter_freeze = 0;
@@ -50,7 +45,6 @@ static char client_name[256];
 
 int main(int argc, char *argv[])
 {
-	SDL_Event event;
 	unsigned int i;
 	int opt;
 	float ref_lev;
@@ -78,10 +72,6 @@ int main(int argc, char *argv[])
 					meter_type = MET_PPM;
 				} else if (!strcmp(optarg, "dpm")) {
 					meter_type = MET_DPM;
-				} else if (!strcmp(optarg, "jf")) {
-					meter_type = MET_JF;
-				} else if (!strcmp(optarg, "sco")) {
-					meter_type = MET_SCO;
 				} else {
 					fprintf(stderr, "Unknown meter type: %s\n", optarg);
 					exit(1);
@@ -112,14 +102,7 @@ int main(int argc, char *argv[])
 		num_meters = MAX_METERS;
 	}
 
-	if (meter_type == MET_JF) {
-		if (num_meters % 2 != 0) {
-			fprintf(stderr, "WARNING: Jellyfish meters require an even number of inputs.\n");
-		}
-		num_scopes = num_meters / 2;
-	} else {
-		num_scopes = num_meters;
-	}
+	num_scopes = num_meters;
 
 	if (num_meters < 1) {
 		fprintf(stderr, "Meterbridge version %s - http://plugin.org.uk/meterbridge/\n\n", VERSION);
@@ -129,82 +112,21 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "     'vu'  - classic moving needle VU meter\n");
 		fprintf(stderr, "     'ppm' - PPM meter\n");
 		fprintf(stderr, "     'dpm' - Digital peak meter\n");
-		fprintf(stderr, "     'jf'  - 'Jellyfish' phase meter\n");
-		fprintf(stderr, "     'sco' - Oscilloscope meter\n");
 		exit(1);
 	}
-	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-		fprintf(stderr, "Unable to init SDL: %s\n", SDL_GetError());
+	if (display_init() < 0) {
+		fprintf(stderr, "Unable to init Display: %s\n", display_get_error()());
 		exit(1);
 	}
-	//atexit(SDL_Quit);
-	//atexit(cleanup);
 
 	for (i=0; i<num_meters; i++) {
 		env[i] = 0.0f;
 	}
 
-	switch (meter_type) {
-		case MET_VU:
-			load_graphics_vu();
-			break;
-		case MET_PPM:
-			load_graphics_ppm();
-			break;
-		case MET_DPM:
-			load_graphics_dpm();
-			break;
-		case MET_JF:
-			load_graphics_jf();
-			break;
-		case MET_SCO:
-			load_graphics_scope();
-			break;
-	}
-		
 	if (columns > num_scopes) {
 		columns = num_scopes;
 	}
 
-	/* Calculate window size */
-	win.x = 0;
-	win.y = 0;
-	win.w = meter->w * columns;
-	win.h = meter->h * (((num_scopes - 1) / columns) + 1);
-
-	screen = SDL_SetVideoMode(win.w, win.h, 32, SDL_SWSURFACE);
-	if ( screen == NULL ) {
-		fprintf(stderr, "Unable to set %dx%d video: %s\n", win.w, win.h, SDL_GetError());
-		exit(1);
-	}
-
-	background_image = find_image("brushed-steel.png");
-
-	/* Draw background image */
-	dest[0].w = background_image->w;
-	dest[0].h = background_image->h;
-	for (x=0; x < win.w; x += background_image->w) {
-		for (y=0; y < win.h; y += background_image->h) {
-			dest[0].x = x;
-			dest[0].y = y;
-			SDL_BlitSurface(background_image, NULL, screen, dest);
-		}
-	}
-
-	/* Draw meter frames */
-	for (i=0, x=0, y=0; i<num_scopes; i++, x++) {
-		dest[i].x = meter->w * x;
-		dest[i].y = meter->h * y;
-		dest[i].w = meter->w;
-		dest[i].h = meter->h;
-		SDL_BlitSurface(meter, NULL, screen, dest+i);
-		if (i % columns == columns - 1) {
-			x = -1;
-			y++;
-		}
-	}
-
-	SDL_UpdateRects(screen, 1, &win);
 
 	/* Register with jack */
 	if (us_client_name) {
@@ -231,20 +153,12 @@ int main(int argc, char *argv[])
 		case MET_DPM:
 			gt = SDL_CreateThread(gfx_thread_dpm, NULL);
 			break;
-		case MET_JF:
-			gt = SDL_CreateThread(gfx_thread_jf, NULL);
-			break;
-		case MET_SCO:
-			gt = SDL_CreateThread(gfx_thread_scope, NULL);
-			break;
 	}
 
 	/* Pick the jack process method */
 	if (meter_type == MET_VU) {
 		init_buffers_rms();
 		jack_set_process_callback(client, process_rms, 0);
-	} else if (meter_type == MET_JF || meter_type == MET_SCO) {
-		jack_set_process_callback(client, process_ring, 0);
 	} else {
 		init_peak(44100.0f);
 		jack_set_process_callback(client, process_peak, &meter_type);
